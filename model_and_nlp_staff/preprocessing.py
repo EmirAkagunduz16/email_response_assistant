@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import re
 import nltk
-import spacy
 from collections import Counter
 import string
 from nltk.corpus import stopwords
@@ -154,7 +153,15 @@ class Timer:
     print(f"{self.name} took {self.interval:.2f} seconds")
 
 def main():
-  full_df = pd.read_csv(r'c:\Users\Victus\Desktop\AI Email Assistant\data\twcs\twcs.csv')
+  # full_df = pd.read_csv(r'c:\Users\Victus\Desktop\AI Email Assistant\data\twcs\twcs.csv')
+  import os
+
+  # Dosya yolu
+  csv_file_path = os.path.join(os.getcwd(), "twcs.csv")  # Yüklenen dosyanın adını kullan
+
+  # CSV dosyasını oku
+  full_df = pd.read_csv(csv_file_path)
+  
   
   df = full_df[['text']]
   df['text'] = df['text'].astype(str)
