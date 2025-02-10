@@ -18,6 +18,7 @@ pd.options.mode.chained_assignment = None # NOTE: What is that?
 
 
 nltk.download('wordnet')
+nltk.download('stopwords')
 nltk.download('averaged_perceptron_tagger')
 nltk.download('omw-1.4')
 
@@ -160,7 +161,9 @@ def main():
   csv_file_path = os.path.join(os.getcwd(), "twcs.csv")  # Yüklenen dosyanın adını kullan
 
   # CSV dosyasını oku
-  full_df = pd.read_csv(csv_file_path)
+  # full_df = pd.read_csv(csv_file_path)
+
+  full_df = pd.read_csv('/content/email_response_assistant/model_and_nlp_staff/twcs.csv')
   
   
   df = full_df[['text']]
