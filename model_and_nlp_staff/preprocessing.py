@@ -194,7 +194,7 @@ def main():
   #   df['text_wo_stemmed'] = df['text_wo_stopfreqrare'].apply(lambda text: preprocessor.stem_words(text))
   
   with Timer("Lemmatizing words"):
-    df['text_wo_lemmatized'] = df['text_wo_stemmed'].apply(lambda text: preprocessor.lemmatize_words(text))
+    df['text_wo_lemmatized'] = df['text_wo_stopfreqrare'].apply(lambda text: preprocessor.lemmatize_words(text))
   
   with Timer("Removing emojis"):
     df['text_wo_lemmatized_remove_emoji'] = df['text_wo_lemmatized'].apply(lambda text: preprocessor.remove_emoji(text))
