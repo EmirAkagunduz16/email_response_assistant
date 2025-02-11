@@ -48,25 +48,20 @@ class Preprocessing:
   def count_word_frequencies(self, df):
     all_words = ' '.join(df['text_wo_stop']).split()
     self.cnt = Counter(all_words)
-    
-  def remove_freqwords(self, df):
+
+  def remove_freqwords(self, text):
     if not self.cnt:
         print("ERROR: Counter is empty before removing frequent words!")
-        return df
     
-    self.FREQWORDS = set(self.cnt.most_common(10))  
-    df['text_wo_stopfreq'] = df['text_wo_stop'].apply(
-        lambda x: " ".join([word for word in x.split() if word not in self.FREQWORDS])
-    )
-    return df
+    self.FREQWORDS = set(word for word, count in self.cnt.most_common(10))
+    words = text.split()
+    return " ".join([word for word in words if word not in self.FREQWORDS])
 
-  def remove_rarewords(self, df):
+  def remove_rarewords(self, text):
     # self.RAREWORDS = set(self.cnt[self.cnt <= self.n_rare_words].index) 
     self.RAREWORDS = set(word for word, count in self.cnt.items() if count <= self.n_rare_words)
-    df['text_wo_stopfreqrare'] = df['text_wo_stopfreq'].apply(
-        lambda x: " ".join([word for word in x.split() if word not in self.RAREWORDS])
-    )
-    return df
+    words = text.split()
+    return " ".join([word for word in words if word not in self.RAREWORDS])
 
   def stem_words(self, text):
     return ' '.join([stemmer.stem(word) for word in text.split()])
@@ -174,27 +169,27 @@ def main():
   preprocessor = Preprocessing()
   
   with Timer("Removing punctuation"):
-    df['text_wo_punct'] = df['text'].apply(preprocessor.remove_punctuation)
+    df['text_wo_punct'] = df['text'].apply(lambda text: preprocessor.remove_punctuation(text))
   
   with Timer("Removing stopwords"):
-    df['text_wo_stop'] = df['text_wo_punct'].apply(preprocessor.remove_stopwords)
+    df['text_wo_stop'] = df['text_wo_punct'].apply(lambda text: preprocessor.remove_stopwords(text))
   
   with Timer("Counting word frequencies"):
     preprocessor.count_word_frequencies(df)
 
   with Timer("Removing frequent words"):
-    df['text_wo_stopfreq'] = preprocessor.remove_freqwords(df)['text_wo_stop']
+    df['text_wo_stopfreq'] = df['text_wo_stop'].apply(lambda text: preprocessor.remove_freqwords(text))
   
   with Timer("Removing rare words"):
-    df['text_wo_stopfreqrare'] = preprocessor.remove_rarewords(df)['text_wo_stopfreq']
+    df['text_wo_stopfreqrare'] = df['text_wo_stopfreq'].apply(lambda text: preprocessor.remove_rarewords(text))
   
   df.drop(['text_wo_punct', 'text_wo_stop', 'text_wo_stopfreq'], axis=1, inplace=True)
   
-  # with Timer("Stemming words"):
-  #   df['text_wo_stemmed'] = df['text_wo_stopfreqrare'].apply(lambda text: preprocessor.stem_words(text))
+  with Timer("Stemming words"):
+    df['text_wo_stemmed'] = df['text_wo_stopfreqrare'].apply(lambda text: preprocessor.stem_words(text))
   
   with Timer("Lemmatizing words"):
-    df['text_wo_lemmatized'] = df['text_wo_stopfreqrare'].apply(lambda text: preprocessor.lemmatize_words(text))
+    df['text_wo_lemmatized'] = df['text_wo_stemmed'].apply(lambda text: preprocessor.lemmatize_words(text))
   
   with Timer("Removing emojis"):
     df['text_wo_lemmatized_remove_emoji'] = df['text_wo_lemmatized'].apply(lambda text: preprocessor.remove_emoji(text))
@@ -220,17 +215,24 @@ def main():
   with Timer("Converting chat words"):
     df['text_wo_chat_words'] = df['text_wo_html'].apply(lambda text: preprocessor.chat_words_conversion(text))
   
-  # with Timer("Correcting spellings"):
-  #   df['text_wo_spellings'] = df['text_wo_chat_words'].apply(lambda text: preprocessor.correct_spellings(text))
-  
-  # df.drop(['text_wo_lemmatized', 'text_wo_lemmatized_remove_emoji', 'text_wo_lemmatized_remove_emoticons', 'text_wo_lemmatized_convert_emojis', 'text_wo_lemmatized_convert_emoticons', 'text_wo_urls', 'text_wo_html', 'text_wo_chat_words'], axis=1, inplace=True)
-  # full_df['cleaned_text'] = df['text_wo_spellings']
-
-  df = df.drop(['text_wo_lemmatized', 'text_wo_lemmatized_remove_emoji', 'text_wo_lemmatized_remove_emoticons', 'text_wo_lemmatized_convert_emojis', 'text_wo_lemmatized_convert_emoticons', 'text_wo_urls', 'text_wo_html'], axis=1, inplace=True)
-
   full_df['cleaned_text'] = df['text_wo_chat_words']
+
+  df.drop(['text_wo_stopfreqrare',
+           'text_wo_stemmed',
+           'text_wo_chat_words',
+           'text_wo_lemmatized', 
+           'text_wo_lemmatized_remove_emoji', 
+           'text_wo_lemmatized_remove_emoticons', 
+           'text_wo_lemmatized_convert_emojis', 
+           'text_wo_lemmatized_convert_emoticons', 
+           'text_wo_urls', 
+           'text_wo_html'], axis=1, inplace=True)
+  
+  
   print(full_df.head()['cleaned_text'])
-  df.to_csv(r'c:\Users\Victus\Desktop\AI Email Assistant\data\twcs\cleaned_twcs.csv', index=False)
+  
+  
+  full_df.to_csv(r'c:\Users\Victus\Desktop\AI Email Assistant\data\twcs\cleaned_twcs.csv', index=False)
   
 if __name__ == "__main__":
   main()
