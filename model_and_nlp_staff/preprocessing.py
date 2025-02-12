@@ -22,15 +22,14 @@ nltk.download('averaged_perceptron_tagger')
 nltk.download('omw-1.4')
 
 
-# cnt = Counter()
-stemmer = PorterStemmer()
-lemmatizer = WordNetLemmatizer()
-spell = SpellChecker()
 
 class Preprocessing:
   
   def __init__(self):
     self.cnt = Counter()
+    self.stemmer = PorterStemmer()
+    self.lemmatizer = WordNetLemmatizer()
+    self.spell = SpellChecker()
     self.n_rare_words = 10
     self.chat_words_map_dict = {}
     self.chat_words_list = []
@@ -64,11 +63,11 @@ class Preprocessing:
     return " ".join([word for word in words if word not in self.RAREWORDS])
 
   def stem_words(self, text):
-    return ' '.join([stemmer.stem(word) for word in text.split()])
+    return ' '.join([self.stemmer.stem(word) for word in text.split()])
 
   def lemmatize_words(self, text):
     pos_tagged_text = nltk.pos_tag(text.split())
-    return " ".join([lemmatizer.lemmatize(word, self.wordnet_map.get(pos[0], wordnet.NOUN)) for word, pos in pos_tagged_text])
+    return " ".join([self.lemmatizer.lemmatize(word, self.wordnet_map.get(pos[0], wordnet.NOUN)) for word, pos in pos_tagged_text])
 
   # Reference : https://gist.github.com/slowkow/7a7f61f495e3dbb7e3d767f97bd7304b
   def remove_emoji(self, string):
@@ -129,6 +128,12 @@ class Preprocessing:
       else:
         new_text.append(w)
     return ' '.join(new_text)
+  
+  
+  # For email
+  def count_word_frequencies_for_email(self, email):
+    all_words = ' '.join(email).split()
+    self.cnt = Counter(all_words)
 
   # def correct_spellings(self, text):
   #   corrected_text = []
@@ -233,6 +238,45 @@ def main():
   
   
   full_df.to_csv(r'c:\Users\Victus\Desktop\AI Email Assistant\data\twcs\cleaned_twcs.csv', index=False)
+
+
+
+
+
+## Email Preprocessing
+import joblib
+vectorizer = joblib.load(r'C:\Users\Victus\Desktop\AI Email Assistant\models\tfidf_vectorizer.pkl')
+
+
+# Tokenization
+def tokenize(text):
+    return nltk.word_tokenize(text)
+
+# Preprocess email
+def preprocess_email(email):
+  preprocessor = Preprocessing()
   
+  cleaned_email = preprocessor.remove_punctuation(email)
+  cleaned_email = preprocessor.remove_stopwords(cleaned_email)
+  preprocessor.count_word_frequencies_for_email(cleaned_email)
+  cleaned_email = preprocessor.remove_freqwords(cleaned_email)
+  cleaned_email = preprocessor.remove_rarewords(cleaned_email)
+  cleaned_email = preprocessor.stem_words(cleaned_email)
+  cleaned_email = preprocessor.lemmatize_words(cleaned_email)
+  cleaned_email = preprocessor.remove_emoji(cleaned_email)
+  cleaned_email = preprocessor.remove_emoticons(cleaned_email)
+  cleaned_email = preprocessor.convert_emojis(cleaned_email)
+  cleaned_email = preprocessor.convert_emoticons(cleaned_email)
+  cleaned_email = preprocessor.remove_urls(cleaned_email)
+  cleaned_email = preprocessor.remove_html(cleaned_email)
+  cleaned_email = preprocessor.chat_words_conversion(cleaned_email)
+  cleaned_email_tokenized = " ".join(tokenize(cleaned_email))
+  cleaned_email_vectorized = vectorizer.transform([cleaned_email_tokenized])
+  
+  return cleaned_email_vectorized
+
+
+
+
 if __name__ == "__main__":
   main()
