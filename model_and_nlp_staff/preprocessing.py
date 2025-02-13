@@ -12,6 +12,8 @@ from Emoticons import Emoticons
 from bs4 import BeautifulSoup
 from spellchecker import SpellChecker
 import time
+from langdetect import detect
+import csv
 
 pd.options.mode.chained_assignment = None # NOTE: What is that?
 
@@ -129,6 +131,12 @@ class Preprocessing:
         new_text.append(w)
     return ' '.join(new_text)
   
+  def is_english(self, text):
+    try:
+        return detect(text) == "en"
+    except:
+        return False
+  
   
   # For email
   def count_word_frequencies_for_email(self, email):
@@ -164,7 +172,13 @@ class Timer:
 
 
 def main():
-  full_df = pd.read_csv(r'c:\Users\Victus\Desktop\AI Email Assistant\data\twcs\low_count_sample_twcs.csv')
+  
+
+  file_path = r'c:\Users\Victus\Desktop\AI Email Assistant\data\twcs\low_count_sample_twcs.csv'
+
+  full_df = pd.read_csv(file_path, encoding="utf-8", doublequote=True, on_bad_lines="skip")
+
+  # full_df = pd.read_csv(r'c:\Users\Victus\Desktop\AI Email Assistant\data\twcs\low_count_sample_twcs.csv')
 
   # full_df = pd.read_csv('/content/email_response_assistant/model_and_nlp_staff/low_count_twcs.csv')
   
@@ -219,8 +233,13 @@ def main():
   
   with Timer("Converting chat words"):
     df['text_wo_chat_words'] = df['text_wo_html'].apply(lambda text: preprocessor.chat_words_conversion(text))
+
+  with Timer("Only English Accepting"):
+    df = df[df['text_wo_chat_words'].apply(lambda text: preprocessor.is_english(text))]
+
   
   full_df['cleaned_text'] = df['text_wo_chat_words']
+  full_df.drop('text', axis=1, inplace=True)
 
   df.drop(['text_wo_stopfreqrare',
            'text_wo_stemmed',
@@ -242,15 +261,10 @@ def main():
 
 
 
-
 ## Email Preprocessing
 import joblib
 vectorizer = joblib.load(r'C:\Users\Victus\Desktop\AI Email Assistant\models\tfidf_vectorizer.pkl')
 
-
-# Tokenization
-def tokenize(text):
-    return nltk.word_tokenize(text)
 
 # Preprocess email
 def preprocess_email(email):
@@ -270,7 +284,7 @@ def preprocess_email(email):
   cleaned_email = preprocessor.remove_urls(cleaned_email)
   cleaned_email = preprocessor.remove_html(cleaned_email)
   cleaned_email = preprocessor.chat_words_conversion(cleaned_email)
-  cleaned_email_tokenized = " ".join(tokenize(cleaned_email))
+  cleaned_email_tokenized = " ".join(nltk.word_tokenize(cleaned_email))
   cleaned_email_vectorized = vectorizer.transform([cleaned_email_tokenized])
   
   return cleaned_email_vectorized
@@ -278,5 +292,10 @@ def preprocess_email(email):
 
 
 
+
 if __name__ == "__main__":
   main()
+
+
+
+  

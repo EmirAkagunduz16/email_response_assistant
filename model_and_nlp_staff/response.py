@@ -2,7 +2,6 @@ from groq import Groq
 import joblib
 from preprocessing import preprocess_email
 
-   
 class Response:
     
     def __init__(self):
@@ -22,15 +21,15 @@ class Response:
             print(chunk.choices[0].delta.content or "", end="")
             
     
-def get_xgb_predicts(user_email):
+def get_svm_predicts(user_email):
     label_encoder = joblib.load(r'C:\Users\Victus\Desktop\AI Email Assistant\models\label_encoder.pkl')
-    xgb = joblib.load(r'C:\Users\Victus\Desktop\AI Email Assistant\models\xgboost_email_classifier.pkl')
+    svm = joblib.load(r'C:\Users\Victus\Desktop\AI Email Assistant\models\svm_model.pkl')
     
     # Kullanıcının e-postasını işle
     cleaned_user_email = preprocess_email(user_email)
     
     # Model tahmini yap
-    predicted_class = xgb.predict(cleaned_user_email)
+    predicted_class = svm.predict(cleaned_user_email)
 
     # Sayısal tahmini etikete çevir
     predicted_label = label_encoder.inverse_transform(predicted_class)
@@ -39,9 +38,12 @@ def get_xgb_predicts(user_email):
 
 
 if __name__ == "__main__":
+    import pandas as pd
+    df = pd.read_csv(r'C:\Users\Victus\Desktop\AI Email Assistant\data\cleaned_twcs_with_label.csv')
+    
     email = str(input('Emailinizi giriniz:'))
-    topic_name = get_xgb_predicts(email)
-    print(f'XGB nin tahmin ettigi kategori: {topic_name}')
+    topic_name = get_svm_predicts(email)
+    print(f'SVM in tahmin ettigi kategori: {topic_name}')
     
     user_email = f"""
     You must respond to the email strictly based on the given category. 
