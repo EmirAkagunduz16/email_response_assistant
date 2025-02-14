@@ -1,6 +1,9 @@
+import sys
+sys.path.append('../')
 from groq import Groq
 import joblib
 from preprocessing import preprocess_email
+
 
 class Response:
     
@@ -9,19 +12,25 @@ class Response:
     
     def get_response(self, user_email):
         completion = self.client.chat.completions.create(
-        model="llama-3.1-8b-instant",
-        messages=[{"role": "user", "content": user_email}],
-        temperature=1,
-        max_completion_tokens=1024,
-        top_p=1,
-        stream=True,
-        stop=None,
+            model="llama-3.1-8b-instant",
+            messages=[{"role": "user", "content": user_email}],
+            temperature=1,
+            max_completion_tokens=1024,
+            top_p=1,
+            stream=True,
+            stop=None,
         )
+        
+        # Collect all chunks into a single response
+        full_response = ""
         for chunk in completion:
-            print(chunk.choices[0].delta.content or "", end="")
+            content = chunk.choices[0].delta.content or ""
+            full_response += content
+        
+        return full_response
             
     
-def get_svm_predicts(user_email):
+def get_svm_predicts(user_email: str):
     label_encoder = joblib.load(r'C:\Users\Victus\Desktop\AI Email Assistant\models\label_encoder.pkl')
     svm = joblib.load(r'C:\Users\Victus\Desktop\AI Email Assistant\models\svm_model.pkl')
     
@@ -43,6 +52,7 @@ if __name__ == "__main__":
     
     email = str(input('Emailinizi giriniz:'))
     topic_name = get_svm_predicts(email)
+    print(type(topic_name))
     print(f'SVM in tahmin ettigi kategori: {topic_name}')
     
     user_email = f"""
