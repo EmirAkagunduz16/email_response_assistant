@@ -1,3 +1,10 @@
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from emoticons import Emoticons
+
 import numpy as np
 import pandas as pd
 import re
@@ -8,14 +15,14 @@ from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
-from Emoticons import Emoticons
 from bs4 import BeautifulSoup
 from spellchecker import SpellChecker
 import time
 from langdetect import detect
-import csv
 
 pd.options.mode.chained_assignment = None # NOTE: What is that?
+
+
 
 
 nltk.download('wordnet')
@@ -38,7 +45,7 @@ class Preprocessing:
     self.PUNCT_TO_REMOVE = string.punctuation
     self.wordnet_map = {"N": wordnet.NOUN, "V": wordnet.VERB, "J": wordnet.ADJ, "R": wordnet.ADV}
 
-  def remove_punctuation(self, text):
+  def remove_punctuation(self, text: str):
     return text.translate(str.maketrans('', '', self.PUNCT_TO_REMOVE))
 
   def remove_stopwords(self, text):
@@ -267,7 +274,7 @@ vectorizer = joblib.load(r'C:\Users\Victus\Desktop\AI Email Assistant\models\tfi
 
 
 # Preprocess email
-def preprocess_email(email):
+def preprocess_email(email: str):
   preprocessor = Preprocessing()
   
   cleaned_email = preprocessor.remove_punctuation(email)
