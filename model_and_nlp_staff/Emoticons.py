@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 from dataclasses import dataclass
 
 @dataclass
